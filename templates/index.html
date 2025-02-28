@@ -1,0 +1,106 @@
+{%extends './layout.html'%}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% block body%}
+<h1>Make list</h1>
+<input type="text" id="txtid" value="0">
+<form action="/registrar_actividad" method="POST">
+    <label for="titulo">Titulo</label>
+    <input type="text" class="titulo" id="titulo" name="titulo">
+    <label for="descripcion">Descripcion</label>
+    <input type="text" class="descripcion" id="descripcion" name="descripcion">
+    <label for="estado">Estado</label>
+    <select name="estado" id="estado">
+        <option value="" disabled selected>Seleccionar estado</option>
+        <option value="1">Activo</option>
+        <option value="0">Desactivo</option>
+    </select>
+    <input type="submit" value="Registrar actividad">
+</form><br>
+<div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div><hr>
+<table id="tabla" class="table table-hover">
+    <thead>
+        <tr class="table-dark">
+            <th>Titulo</th>
+            <th>Descripcion</th>
+            <th>Estado</th>
+            <th>Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contact in contacts %}
+        <tr> 
+            <td>{{ contact.1 }}</td>
+            <td>{{ contact.2 }}</td>
+            <td>{{ contact.3 }}</td>
+            <td>{{ contact.4 }}</td>
+            <td>
+                <button class="btn btn-primary btn-editar" data-id="{{ contact.0 }}">EDITAR</button>
+                <a href="/eliminar_actividad/{{contact.0}}">ELIMINAR</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    $(".btn-editar").click(function(event) {
+        event.preventDefault(); // Evita que el botón provoque una navegación
+        var id = $(this).data("id"); // Obtiene el ID desde el atributo data-id
+
+        $.ajax({
+            url: `/editar_actividad/${id}`,
+            type: "GET",
+            dataType: "json",
+            success: function(data) {
+                console.log("Datos recibidos:", data);
+                $("#txtid").val(data.id);
+                $("#titulo").val(data.titulo);
+                $("#descripcion").val(data.descripcion);
+                $("#estado").val(data.estado);
+                $("#btn-submit").val("Actualizar actividad"); // Cambia el texto del botón
+            },
+            error: function(error) {
+                console.error("Error en la petición:", error);
+            }
+        });
+    });
+
+    $("form").submit(function(event) {
+        var id = $("#txtid").val();
+        if (id !== "0") { // Si tiene un ID, actualizar en lugar de registrar
+            event.preventDefault();
+            $.ajax({
+                url: "/actualizar_actividad",
+                type: "POST",
+                data: {
+                    id: id,
+                    titulo: $("#titulo").val(),
+                    descripcion: $("#descripcion").val(),
+                    estado: $("#estado").val()
+                },
+                success: function(response) {
+                    alert(response.message);
+                    location.reload(); // Recargar la página
+                },
+                error: function(error) {
+                    console.error("Error en la actualización:", error);
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock%}
